@@ -163,14 +163,14 @@ class ModuleDetailScreen(Screen):
         """Handle install button press."""
         await self.installer.install(self.module)
         self.notify(f"Installed {self.module.name}")
-        self.app.pop_screen()
+        self.dismiss(True)  # Signal that refresh is needed
 
     @on(Button.Pressed, "#uninstall-btn")
     async def handle_uninstall(self) -> None:
         """Handle uninstall button press."""
         self.installer.uninstall(self.module.id)
         self.notify(f"Uninstalled {self.module.name}")
-        self.app.pop_screen()
+        self.dismiss(True)  # Signal that refresh is needed
 
     @on(Button.Pressed, "#back-btn")
     def handle_back(self) -> None:
@@ -371,7 +371,16 @@ class BashModsApp(App):
         module_id = event.row_key.value
         module = self.registry.get_module(module_id)
         if module:
-            self.push_screen(ModuleDetailScreen(module, self.installer))
+            # Push screen with callback to handle refresh
+            def on_detail_screen_dismiss(refresh_needed):
+                if refresh_needed:
+                    self._update_table()
+                    self.run_worker(self._check_conflicts())
+
+            self.push_screen(
+                ModuleDetailScreen(module, self.installer),
+                on_detail_screen_dismiss
+            )
 
     async def action_refresh(self) -> None:
         """Refresh the registry."""
@@ -419,19 +428,42 @@ class BashModsApp(App):
             return
 
         # Show category selection screen with callback
-        def handle_category_selection(result):
+        def on_category_selected(result):
             # Update filter based on selection
             if result is not None:
-                # User didn't cancel
-                self.current_category_filter = result if result != "all" else None
+                # User selected a category (or "all")
+                self.current_category_filter = result
 
-            # Trigger search update to apply filter
-            search_input = self.query_one("#search-input", Input)
-            search_input.value = search_input.value  # Trigger change event
+                # Get base modules filtered by category
+                if self.current_category_filter:
+                    base_modules = [
+                        m for m in self.registry.get_modules()
+                        if m.category == self.current_category_filter
+                    ]
+                else:
+                    base_modules = self.registry.get_modules()
+
+                # Apply any existing search query
+                search_input = self.query_one("#search-input", Input)
+                query = search_input.value.strip()
+                if query:
+                    query_lower = query.lower()
+                    self.current_modules = [
+                        m for m in base_modules
+                        if (query_lower in m.name.lower()
+                            or query_lower in m.description.lower()
+                            or query_lower in m.category.lower()
+                            or query_lower in m.id.lower())
+                    ]
+                else:
+                    self.current_modules = base_modules
+
+                # Refresh the table
+                self._update_table()
 
         self.push_screen(
             CategoryFilterScreen(categories, self.current_category_filter),
-            handle_category_selection
+            on_category_selected
         )
 
     def action_help(self) -> None:
