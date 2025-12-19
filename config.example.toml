@@ -1,0 +1,34 @@
+# bash-mods configuration file
+# Copy this to ~/.config/bash-mods/config.toml and customize
+
+# GitHub repository settings
+# The registry URL will be constructed as:
+#   https://raw.githubusercontent.com/{user}/{repo}/{branch}/registry.json
+#
+# Your repo should contain:
+#   - registry.json (must be in the root)
+#   - *.sh files (can be anywhere - registry.json has the URL for each)
+#
+# Example repo structure:
+#   my-bashrc-modules/
+#   ├── registry.json          # Defines all modules and their URLs
+#   ├── git.sh                 # Modules can be in root
+#   ├── docker.sh
+#   └── modules/               # Or organized in subdirectories
+#       ├── python.sh
+#       └── aws.sh
+#
+# The registry.json "url" field for each module specifies its exact location,
+# e.g., "url": "https://raw.githubusercontent.com/{user}/{repo}/{branch}/modules/python.sh"
+
+github_user = "your-github-username"
+github_repo = "bashrc-modules"
+github_branch = "main"
+
+# Installation directory for modules
+# Tilde (~) will be expanded to your home directory
+install_dir = "~/.bashrc.d"
+
+# Optional: Override the registry URL directly
+# If set, this takes precedence over the GitHub settings above
+# registry_url = "https://example.com/custom-registry.json"
