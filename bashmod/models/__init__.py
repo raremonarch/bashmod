@@ -1,4 +1,4 @@
-"""Data models for bash-mods."""
+"""Data models for bashmod."""
 
 from .module import Module, ModuleExports, InstalledModule
 

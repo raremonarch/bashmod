@@ -1,5 +1,5 @@
-# bash-mods configuration file
-# Copy this to ~/.config/bash-mods/config.toml and customize
+# bashmod configuration file
+# Copy this to ~/.config/bashmod/config.toml and customize
 
 # GitHub repository settings
 # The registry URL will be constructed as:

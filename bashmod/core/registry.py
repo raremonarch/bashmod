@@ -4,8 +4,8 @@ import json
 from typing import List, Optional
 import httpx
 
-from bash_mods.models import Module
-from bash_mods.config import get_config
+from bashmod.models import Module
+from bashmod.config import get_config
 
 
 class Registry:

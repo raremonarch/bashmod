@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import httpx
 
-from bash_mods.models import Module, InstalledModule, ModuleExports
-from bash_mods.core.parser import ShellScriptParser
-from bash_mods.config import get_config
+from bashmod.models import Module, InstalledModule, ModuleExports
+from bashmod.core.parser import ShellScriptParser
+from bashmod.config import get_config
 
 
 class ModuleInstaller:
@@ -23,7 +23,7 @@ class ModuleInstaller:
             config = get_config()
             self.install_dir = config.install_dir
 
-        self.metadata_file = self.install_dir / ".bash-mods-installed.json"
+        self.metadata_file = self.install_dir / ".bashmod-installed.json"
         self._ensure_install_dir()
 
     def _ensure_install_dir(self) -> None:

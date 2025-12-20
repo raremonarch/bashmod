@@ -2,7 +2,7 @@
 
 import re
 from typing import Set
-from bash_mods.models import ModuleExports
+from bashmod.models import ModuleExports
 
 
 class ShellScriptParser:

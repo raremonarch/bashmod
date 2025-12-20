@@ -1,8 +1,8 @@
-# bash-mods
+# bashmod
 
 A TUI (Text User Interface) package manager for modular bash configurations. Easily discover, install, and manage bashrc.d modules from a curated registry.
 
-![bash-mods demo](https://via.placeholder.com/800x400?text=bash-mods+TUI+Demo)
+![bashmod demo](https://via.placeholder.com/800x400?text=bashmod+TUI+Demo)
 
 ## Features
 
@@ -18,20 +18,20 @@ A TUI (Text User Interface) package manager for modular bash configurations. Eas
 ### Using pipx (Recommended)
 
 ```bash
-pipx install git+https://github.com/user/bash-mods.git
+pipx install git+https://github.com/user/bashmod.git
 ```
 
 ### Using pip
 
 ```bash
-pip install git+https://github.com/user/bash-mods.git
+pip install git+https://github.com/user/bashmod.git
 ```
 
 ### Development Installation
 
 ```bash
-git clone https://github.com/user/bash-mods.git
-cd bash-mods
+git clone https://github.com/user/bashmod.git
+cd bashmod
 python -m venv venv
 source venv/bin/activate
 pip install -e .
@@ -43,23 +43,23 @@ For easy access, add the bash wrapper to your PATH:
 
 ```bash
 # Add to ~/.bashrc or ~/.bash_profile
-export PATH="$PATH:/path/to/bash-mods/bin"
+export PATH="$PATH:/path/to/bashmod/bin"
 ```
 
-Now you can run `bash-mods` from anywhere, even in development mode.
+Now you can run `bashmod` from anywhere, even in development mode.
 
 ## Usage
 
 ### Launch the TUI
 
 ```bash
-bash-mods
+bashmod
 ```
 
 Or if installed via pipx/pip:
 
 ```bash
-python -m bash_mods
+python -m bashmod
 ```
 
 ### Development Mode
@@ -67,9 +67,9 @@ python -m bash_mods
 Run with `--dev` to enable Textual devtools and see detailed error messages:
 
 ```bash
-bash-mods --dev
+bashmod --dev
 # or from the project directory
-./bin/bash-mods --dev
+./bin/bashmod --dev
 ```
 
 This is useful for debugging issues or developing new features.
@@ -100,7 +100,7 @@ The active category filter is shown in the footer (e.g., `category: development`
 
 ### Configuration
 
-bash-mods uses a configuration file at `~/.config/bash-mods/config.toml`. You can customize:
+bashmod uses a configuration file at `~/.config/bashmod/config.toml`. You can customize:
 
 - **GitHub Repository** - Where to fetch the registry from
 - **Registry URL** - Override with a custom registry URL
@@ -109,8 +109,8 @@ bash-mods uses a configuration file at `~/.config/bash-mods/config.toml`. You ca
 Copy the example config:
 
 ```bash
-mkdir -p ~/.config/bash-mods
-cp config.example.toml ~/.config/bash-mods/config.toml
+mkdir -p ~/.config/bashmod
+cp config.example.toml ~/.config/bashmod/config.toml
 # Edit the file to customize your settings
 ```
 
@@ -132,13 +132,13 @@ install_dir = "~/.bashrc.d"
 You can also override the registry URL at runtime:
 
 ```bash
-bash-mods --registry-url https://example.com/my-registry.json
+bashmod --registry-url https://example.com/my-registry.json
 ```
 
 ## How It Works
 
 1. **Module Registry** - Modules are defined in a JSON registry hosted on GitHub
-2. **Installation** - Modules are downloaded to `~/.bashrc.d/` and tracked in `.bash-mods-installed.json`
+2. **Installation** - Modules are downloaded to `~/.bashrc.d/` and tracked in `.bashmod-installed.json`
 3. **Auto-Loading** - Your `~/.bashrc` should source all files in `~/.bashrc.d/`:
 
 ```bash
@@ -153,7 +153,7 @@ fi
 unset rc
 ```
 
-4. **Conflict Detection** - bash-mods scans all installed modules for duplicate definitions
+4. **Conflict Detection** - bashmod scans all installed modules for duplicate definitions
 
 ## Creating a Module Registry
 
@@ -194,7 +194,7 @@ Create a `registry.json` file with this format:
 
 ## Conflict Detection
 
-bash-mods automatically detects conflicts between modules:
+bashmod automatically detects conflicts between modules:
 
 - **On Startup** - Scans all installed modules
 - **After Install** - Checks if new module conflicts with existing ones
@@ -215,8 +215,8 @@ You can choose to keep both modules (last one loaded wins) or uninstall one to r
 ## Project Structure
 
 ```
-bash-mods/
-├── bash_mods/           # Main package
+bashmod/
+├── bashmod/           # Main package
 │   ├── core/            # Core logic
 │   │   ├── registry.py  # Registry management
 │   │   ├── installer.py # Module installation
@@ -228,7 +228,7 @@ bash-mods/
 │   │   └── app.py       # Textual app
 │   └── __main__.py      # CLI entry point
 ├── bin/                 # Bash wrapper
-│   └── bash-mods        # Hybrid bash/python launcher
+│   └── bashmod        # Hybrid bash/python launcher
 ├── tests/               # Test suite
 ├── pyproject.toml       # Python project config
 └── README.md            # This file

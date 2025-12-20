@@ -1,4 +1,4 @@
-"""Core functionality for bash-mods."""
+"""Core functionality for bashmod."""
 
 from .registry import Registry
 from .parser import ShellScriptParser

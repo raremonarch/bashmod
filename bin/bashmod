@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Bash wrapper for bash-mods TUI
-# This provides a simple command that works whether bash-mods is installed via pipx or run from source
+# Bash wrapper for bashmod TUI
+# This provides a simple command that works whether bashmod is installed via pipx or run from source
 
 set -e
 
-# Try to run bash-mods if it's installed
-if command -v bash-mods &> /dev/null; then
-    exec bash-mods "$@"
+# Try to run bashmod if it's installed
+if command -v bashmod &> /dev/null; then
+    exec bashmod "$@"
 fi
 
 # Otherwise, try to run from source (development mode)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-if [ -f "$PROJECT_ROOT/bash_mods/__main__.py" ]; then
+if [ -f "$PROJECT_ROOT/bashmod/__main__.py" ]; then
     # Create venv if it doesn't exist
     if [ ! -d "$PROJECT_ROOT/venv" ]; then
         echo "Initializing..." >&2
@@ -31,14 +31,14 @@ if [ -f "$PROJECT_ROOT/bash_mods/__main__.py" ]; then
         pip install -q -e "$PROJECT_ROOT"
     fi
 
-    exec python -m bash_mods "$@"
+    exec python -m bashmod "$@"
 fi
 
-# If we get here, bash-mods is not installed and not in dev mode
-echo "Error: bash-mods is not installed and cannot be run from source" >&2
+# If we get here, bashmod is not installed and not in dev mode
+echo "Error: bashmod is not installed and cannot be run from source" >&2
 echo "" >&2
 echo "To install with pipx:" >&2
-echo "  pipx install git+https://github.com/user/bash-mods.git" >&2
+echo "  pipx install git+https://github.com/user/bashmod.git" >&2
 echo "" >&2
 echo "Or run from this directory to auto-setup dev environment" >&2
 exit 1

@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Set
 from dataclasses import dataclass
-from bash_mods.models import Module, ModuleExports
+from bashmod.models import Module, ModuleExports
 
 
 @dataclass

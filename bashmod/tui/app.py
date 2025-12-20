@@ -8,8 +8,8 @@ from textual.binding import Binding
 from textual.screen import Screen
 from textual import on
 
-from bash_mods.core import Registry, ModuleInstaller, ConflictDetector
-from bash_mods.models import Module
+from bashmod.core import Registry, ModuleInstaller, ConflictDetector
+from bashmod.models import Module
 
 
 class CategoryFilterScreen(Screen):
@@ -178,8 +178,8 @@ class ModuleDetailScreen(Screen):
         self.app.pop_screen()
 
 
-class BashModsApp(App):
-    """Main application for bash-mods TUI."""
+class BashMod(App):
+    """Main application for bashmod TUI."""
 
     CSS = """
     Screen {
@@ -325,7 +325,7 @@ class BashModsApp(App):
         ]
 
         # Detect conflicts
-        from bash_mods.core.conflicts import ConflictDetector
+        from bashmod.core.conflicts import ConflictDetector
         conflicts = ConflictDetector.detect_conflicts(installed_modules)
 
         # Update panel
@@ -406,7 +406,7 @@ class BashModsApp(App):
             if m.id in installed_ids
         ]
 
-        from bash_mods.core.conflicts import ConflictDetector
+        from bashmod.core.conflicts import ConflictDetector
         conflicts = ConflictDetector.detect_conflicts(installed_modules)
         message = ConflictDetector.format_conflicts(conflicts)
         self.notify(message, timeout=10)

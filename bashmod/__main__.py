@@ -1,8 +1,8 @@
-"""Main entry point for bash-mods CLI."""
+"""Main entry point for bashmod CLI."""
 
 import sys
 import argparse
-from bash_mods.tui import BashModsApp
+from bashmod.tui import BashMod
 
 
 def main():
@@ -23,13 +23,13 @@ def main():
     parser.add_argument(
         "--version",
         action="version",
-        version="bash-mods 0.1.0"
+        version="bashmod 0.1.0"
     )
 
     args = parser.parse_args()
 
     # Run the TUI app
-    app = BashModsApp(registry_url=args.registry_url)
+    app = BashMod(registry_url=args.registry_url)
     if args.dev:
         # Run with dev mode - shows all errors and enables devtools
         import os

@@ -1,4 +1,4 @@
-"""Configuration management for bash-mods."""
+"""Configuration management for bashmod."""
 
 import os
 import sys
@@ -26,7 +26,7 @@ class Config:
 
     def __init__(self):
         """Initialize configuration."""
-        self.config_file = Path.home() / ".config" / "bash-mods" / "config.toml"
+        self.config_file = Path.home() / ".config" / "bashmod" / "config.toml"
         self._config = self._load_config()
 
     def _load_config(self) -> dict:
