@@ -10,6 +10,7 @@ from textual import on
 
 from bashmod.core import Registry, ModuleInstaller, ConflictDetector
 from bashmod.models import Module
+from bashmod.config import get_config
 
 
 class CategoryFilterScreen(Screen):
@@ -191,10 +192,19 @@ class BashMod(App):
         margin: 1;
     }
 
-    #conflicts-panel {
+    #config-error-panel {
         dock: top;
         height: auto;
         background: $error;
+        color: $text;
+        padding: 1;
+        margin: 0 1;
+    }
+
+    #conflicts-panel {
+        dock: top;
+        height: auto;
+        background: $warning;
         color: $text;
         padding: 1;
         margin: 0 1;
@@ -256,6 +266,7 @@ class BashMod(App):
         """Compose the main UI."""
         yield Header()
         yield Input(placeholder="Search modules...", id="search-input")
+        yield Static("", id="config-error-panel")
         yield Static("", id="conflicts-panel")
         yield DataTable(id="modules-table")
         yield Footer()
@@ -267,8 +278,19 @@ class BashMod(App):
         table.add_columns("Status", "Name", "Version", "Category", "Description")
 
         # Hide panels initially
+        config_error_panel = self.query_one("#config-error-panel")
+        config_error_panel.display = False
         conflicts_panel = self.query_one("#conflicts-panel")
         conflicts_panel.display = False
+
+        # Check for config errors
+        config = get_config()
+        if config.has_error:
+            error_msg = config.get_error_message()
+            config_error_panel.update(error_msg)
+            config_error_panel.display = True
+            # Don't try to load registry if config is broken
+            return
 
         # Set initial focus to table (not search)
         table.focus()

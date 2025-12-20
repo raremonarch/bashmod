@@ -34,14 +34,42 @@ class Config:
         if self.config_file.exists():
             try:
                 if tomllib is None:
-                    # Fallback if tomli not installed
+                    # tomli not available
+                    self.config_error = (
+                        f"Config file found but tomli/tomllib not available"
+                    )
                     return {}
                 with open(self.config_file, "rb") as f:
                     return tomllib.load(f)
-            except Exception:
-                # If config is invalid, return empty dict
+            except Exception as e:
+                # Config parsing failed
+                self.config_error = f"Could not parse config file: {e}"
                 return {}
+
+        # No config file found
+        self.config_error = f"Config file not found."
         return {}
+
+    @property
+    def has_error(self) -> bool:
+        """Check if there's a configuration error."""
+        return hasattr(self, "config_error")
+
+    def get_error_message(self) -> str:
+        """Get the configuration error message."""
+        if not self.has_error:
+            return ""
+
+        msg = f"⚠ Configuration Error\n\n{self.config_error}\n\n"
+        msg += "To fix:\n"
+        msg += "1. Create the config directory:\n"
+        msg += f"   mkdir -p {self.config_file.parent}\n\n"
+        msg += "2. Copy the example config:\n"
+        msg += f"   cp config.example.toml {self.config_file}\n\n"
+        msg += "3. Edit with your settings:\n"
+        msg += f"   vim {self.config_file}"
+
+        return msg
 
     def save_config(self) -> None:
         """Save configuration to file (not implemented for TOML)."""
