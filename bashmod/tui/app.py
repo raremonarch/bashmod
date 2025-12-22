@@ -114,8 +114,7 @@ class ModuleDetailScreen(Screen):
 
         yield Header()
         with Vertical():
-            yield Static(f"[bold]{self.module.name}[/bold]", classes="detail-title")
-            yield Static(f"ID: {self.module.id}", classes="detail-field")
+            yield Static(f"[bold]{self.module.id}[/bold]", classes="detail-title")
             yield Static(f"Version: {self.module.version}", classes="detail-field")
             yield Static(f"Category: {self.module.category}", classes="detail-field")
             yield Static(f"Status: {status}", classes="detail-field")
@@ -163,14 +162,14 @@ class ModuleDetailScreen(Screen):
     async def handle_install(self) -> None:
         """Handle install button press."""
         await self.installer.install(self.module)
-        self.notify(f"Installed {self.module.name}")
+        self.notify(f"Installed {self.module.id}")
         self.dismiss(True)  # Signal that refresh is needed
 
     @on(Button.Pressed, "#uninstall-btn")
     async def handle_uninstall(self) -> None:
         """Handle uninstall button press."""
         self.installer.uninstall(self.module.id)
-        self.notify(f"Uninstalled {self.module.name}")
+        self.notify(f"Uninstalled {self.module.id}")
         self.dismiss(True)  # Signal that refresh is needed
 
     @on(Button.Pressed, "#back-btn")
@@ -275,7 +274,7 @@ class BashMod(App):
         """Initialize the app on mount."""
         table = self.query_one(DataTable)
         table.cursor_type = "row"
-        table.add_columns("Status", "Name", "Version", "Category", "Description")
+        table.add_columns("Status", "ID", "Version", "Category", "Description")
 
         # Hide panels initially
         config_error_panel = self.query_one("#config-error-panel")
@@ -321,7 +320,7 @@ class BashMod(App):
 
             table.add_row(
                 status,
-                module.name,
+                module.id,
                 module.version,
                 module.category,
                 module.description[:50] + "..." if len(module.description) > 50 else module.description,
@@ -377,10 +376,9 @@ class BashMod(App):
             query_lower = query.lower()
             self.current_modules = [
                 m for m in base_modules
-                if (query_lower in m.name.lower()
+                if (query_lower in m.id.lower()
                     or query_lower in m.description.lower()
-                    or query_lower in m.category.lower()
-                    or query_lower in m.id.lower())
+                    or query_lower in m.category.lower())
             ]
         else:
             self.current_modules = base_modules
@@ -472,10 +470,9 @@ class BashMod(App):
                     query_lower = query.lower()
                     self.current_modules = [
                         m for m in base_modules
-                        if (query_lower in m.name.lower()
+                        if (query_lower in m.id.lower()
                             or query_lower in m.description.lower()
-                            or query_lower in m.category.lower()
-                            or query_lower in m.id.lower())
+                            or query_lower in m.category.lower())
                     ]
                 else:
                     self.current_modules = base_modules

@@ -2,6 +2,8 @@
 
 import sys
 import argparse
+import logging
+from pathlib import Path
 from bashmod.tui import BashMod
 
 
@@ -18,7 +20,7 @@ def main():
     parser.add_argument(
         "--dev",
         action="store_true",
-        help="Run in development mode (enables Textual devtools)"
+        help="Run in development mode (logs errors to stderr and enables Textual devtools)"
     )
     parser.add_argument(
         "--version",
@@ -31,10 +33,37 @@ def main():
     # Run the TUI app
     app = BashMod(registry_url=args.registry_url)
     if args.dev:
-        # Run with dev mode - shows all errors and enables devtools
+        # Run with dev mode - logs errors to stderr
         import os
+        import traceback
         os.environ["TEXTUAL"] = "devtools"
-        app.run()
+
+        # Configure logging to stderr
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+            stream=sys.stderr
+        )
+
+        # Also log to file for persistence
+        log_file = Path.home() / '.cache' / 'bashmod' / 'debug.log'
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        ))
+        logging.getLogger().addHandler(file_handler)
+
+        print(f"Dev mode: Logging to stderr and {log_file}", file=sys.stderr)
+
+        try:
+            app.run()
+        except Exception as e:
+            # Log the full traceback
+            error_msg = f"\n{'='*60}\nFATAL ERROR:\n{traceback.format_exc()}{'='*60}\n"
+            print(error_msg, file=sys.stderr)
+            logging.error(f"Application crashed: {e}", exc_info=True)
+            sys.exit(1)
     else:
         app.run()
 

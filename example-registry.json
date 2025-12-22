@@ -3,7 +3,6 @@
   "modules": [
     {
       "id": "git-helpers",
-      "name": "Git Helpers",
       "description": "Git aliases and clone helpers for multiple remotes",
       "version": "1.0.0",
       "url": "https://raw.githubusercontent.com/user/bashrc-modules/main/git.sh",
@@ -17,7 +16,6 @@
     },
     {
       "id": "docker-utils",
-      "name": "Docker Utils",
       "description": "Docker cleanup and management functions",
       "version": "1.0.0",
       "url": "https://raw.githubusercontent.com/user/bashrc-modules/main/docker.sh",
@@ -31,7 +29,6 @@
     },
     {
       "id": "ssh-agent",
-      "name": "SSH Agent Manager",
       "description": "Persistent SSH agent management with key loading",
       "version": "1.0.0",
       "url": "https://raw.githubusercontent.com/user/bashrc-modules/main/ssh-agent.sh",
@@ -45,7 +42,6 @@
     },
     {
       "id": "python-dev",
-      "name": "Python Development",
       "description": "Python virtual environment and development helpers",
       "version": "1.0.0",
       "url": "https://raw.githubusercontent.com/user/bashrc-modules/main/python.sh",
@@ -59,7 +55,6 @@
     },
     {
       "id": "aws-helpers",
-      "name": "AWS Helpers",
       "description": "AWS CLI shortcuts and profile management",
       "version": "1.0.0",
       "url": "https://raw.githubusercontent.com/user/bashrc-modules/main/aws.sh",

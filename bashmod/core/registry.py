@@ -30,7 +30,24 @@ class Registry:
             response.raise_for_status()
             data = response.json()
 
-        self._modules = [Module(**mod) for mod in data.get("modules", [])]
+        # Validate registry version
+        registry_version = data.get("version", "1.0")
+        if registry_version != "1.0":
+            raise ValueError(f"Unsupported registry version: {registry_version}")
+
+        # Parse modules with validation
+        modules_data = []
+        for idx, mod in enumerate(data.get("modules", [])):
+            # Validate: reject modules with 'name' field (not part of schema)
+            if "name" in mod:
+                raise ValueError(
+                    f"Module at index {idx} (id: {mod.get('id', 'unknown')}) "
+                    f"contains invalid 'name' field. "
+                    f"The 'name' field is not part of the registry schema. Remove it."
+                )
+            modules_data.append(mod)
+
+        self._modules = [Module(**mod) for mod in modules_data]
         self._loaded = True
 
     def get_modules(self) -> List[Module]:
@@ -47,15 +64,14 @@ class Registry:
         return None
 
     def search(self, query: str) -> List[Module]:
-        """Search modules by name, description, or category."""
+        """Search modules by ID, description, or category."""
         query_lower = query.lower()
         results = []
         for module in self.get_modules():
             if (
-                query_lower in module.name.lower()
+                query_lower in module.id.lower()
                 or query_lower in module.description.lower()
                 or query_lower in module.category.lower()
-                or query_lower in module.id.lower()
             ):
                 results.append(module)
         return results

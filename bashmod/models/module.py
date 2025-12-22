@@ -18,7 +18,6 @@ class Module:
     """Represents a bash module from the registry."""
 
     id: str
-    name: str
     description: str
     version: str
     url: str
