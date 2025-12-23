@@ -22,6 +22,7 @@ class Module:
     version: str
     url: str
     category: str
+    source: str = ""  # Auto-derived label for registry source
     dependencies: List[str] = field(default_factory=list)
     exports: Optional[ModuleExports] = None
 

@@ -14,13 +14,25 @@ def main():
     )
     parser.add_argument(
         "--registry-url",
-        help="Custom registry URL (default: GitHub)",
+        action="append",
+        dest="registry_urls",
+        help="Registry URL (can be specified multiple times)",
+        default=None
+    )
+    parser.add_argument(
+        "--registry-path",
+        action="append",
+        dest="registry_paths",
+        help="Local registry path (can be specified multiple times)",
         default=None
     )
     parser.add_argument(
         "--dev",
         action="store_true",
-        help="Run in development mode (logs errors to stderr and enables Textual devtools)"
+        help=(
+            "Run in development mode "
+            "(logs errors to stderr and enables Textual devtools)"
+        )
     )
     parser.add_argument(
         "--version",
@@ -31,7 +43,10 @@ def main():
     args = parser.parse_args()
 
     # Run the TUI app
-    app = BashMod(registry_url=args.registry_url)
+    app = BashMod(
+        registry_urls=args.registry_urls,
+        registry_paths=args.registry_paths
+    )
     if args.dev:
         # Run with dev mode - logs errors to stderr
         import os

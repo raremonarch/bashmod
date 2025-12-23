@@ -1,14 +1,18 @@
 """Main Textual application."""
 
+from typing import List
+
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, DataTable, Input, Static, Button, OptionList
+from textual.widgets import (
+    Header, Footer, DataTable, Input, Static, Button, OptionList
+)
 from textual.widgets.option_list import Option
-from textual.containers import Container, Vertical, Horizontal
+from textual.containers import Vertical, Horizontal
 from textual.binding import Binding
 from textual.screen import Screen
 from textual import on
 
-from bashmod.core import Registry, ModuleInstaller, ConflictDetector
+from bashmod.core import Registry, ModuleInstaller
 from bashmod.models import Module
 from bashmod.config import get_config
 
@@ -254,9 +258,10 @@ class BashMod(App):
         Binding("f", "filter_category", "filter category", show=True, priority=True),
     ]
 
-    def __init__(self, registry_url: str = None, *args, **kwargs):
+    def __init__(self, registry_urls: List[str] = None,
+                 registry_paths: List[str] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.registry = Registry(registry_url)
+        self.registry = Registry(registry_urls, registry_paths)
         self.installer = ModuleInstaller()
         self.current_modules = []
         self.current_category_filter = None
@@ -274,7 +279,9 @@ class BashMod(App):
         """Initialize the app on mount."""
         table = self.query_one(DataTable)
         table.cursor_type = "row"
-        table.add_columns("Status", "ID", "Version", "Category", "Description")
+        table.add_columns(
+            "Status", "ID", "Version", "Source", "Category", "Description"
+        )
 
         # Hide panels initially
         config_error_panel = self.query_one("#config-error-panel")
@@ -310,7 +317,13 @@ class BashMod(App):
         table = self.query_one(DataTable)
         table.clear()
 
-        for module in self.current_modules:
+        # Sort modules by ID first, then by version
+        sorted_modules = sorted(
+            self.current_modules,
+            key=lambda m: (m.id, m.version)
+        )
+
+        for module in sorted_modules:
             is_installed = self.installer.is_installed(module.id)
             installed_version = self.installer.get_installed_version(module.id)
 
@@ -318,13 +331,22 @@ class BashMod(App):
             if is_installed and installed_version != module.version:
                 status = "↑"  # Update available
 
+            # Create unique key: source:id:version
+            unique_key = f"{module.source}:{module.id}:{module.version}"
+
+            # Truncate description if too long
+            desc = module.description
+            if len(desc) > 50:
+                desc = desc[:50] + "..."
+
             table.add_row(
                 status,
                 module.id,
                 module.version,
+                module.source,
                 module.category,
-                module.description[:50] + "..." if len(module.description) > 50 else module.description,
-                key=module.id
+                desc,
+                key=unique_key
             )
 
     async def _check_conflicts(self) -> None:
@@ -388,8 +410,21 @@ class BashMod(App):
     @on(DataTable.RowSelected)
     def handle_row_selected(self, event: DataTable.RowSelected) -> None:
         """Handle row selection."""
-        module_id = event.row_key.value
-        module = self.registry.get_module(module_id)
+        # Parse unique key: source:id:version
+        unique_key = event.row_key.value
+        parts = unique_key.split(':', 2)
+        if len(parts) != 3:
+            return
+
+        source, module_id, version = parts
+
+        # Find the specific module by source, id, and version
+        module = None
+        for m in self.current_modules:
+            if m.source == source and m.id == module_id and m.version == version:
+                module = m
+                break
+
         if module:
             # Push screen with callback to handle refresh
             def on_detail_screen_dismiss(refresh_needed):

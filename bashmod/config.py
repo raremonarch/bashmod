@@ -19,9 +19,6 @@ class Config:
     """Application configuration."""
 
     # Default values
-    DEFAULT_GITHUB_USER = "user"
-    DEFAULT_GITHUB_REPO = "bashrc-modules"
-    DEFAULT_GITHUB_BRANCH = "main"
     DEFAULT_INSTALL_DIR = "~/.bashrc.d"
 
     def __init__(self):
@@ -81,55 +78,19 @@ class Config:
         )
 
     @property
-    def github_user(self) -> str:
-        """Get GitHub username."""
-        return self._config.get("github_user", self.DEFAULT_GITHUB_USER)
+    def registry_urls(self) -> list[str]:
+        """Get list of registry URLs (HTTP/HTTPS)."""
+        return self._config.get("registry_urls", [])
 
-    @github_user.setter
-    def github_user(self, value: str) -> None:
-        """Set GitHub username."""
-        self._config["github_user"] = value
-
-    @property
-    def github_repo(self) -> str:
-        """Get GitHub repository name."""
-        return self._config.get("github_repo", self.DEFAULT_GITHUB_REPO)
-
-    @github_repo.setter
-    def github_repo(self, value: str) -> None:
-        """Set GitHub repository name."""
-        self._config["github_repo"] = value
+    @registry_urls.setter
+    def registry_urls(self, value: list[str]) -> None:
+        """Set registry URLs."""
+        self._config["registry_urls"] = value
 
     @property
-    def github_branch(self) -> str:
-        """Get GitHub branch name."""
-        return self._config.get("github_branch", self.DEFAULT_GITHUB_BRANCH)
-
-    @github_branch.setter
-    def github_branch(self, value: str) -> None:
-        """Set GitHub branch name."""
-        self._config["github_branch"] = value
-
-    @property
-    def registry_url(self) -> str:
-        """Get registry URL (custom or generated from GitHub settings)."""
-        custom_url = self._config.get("registry_url")
-        if custom_url:
-            return custom_url
-
-        # Generate from GitHub settings
-        return (
-            f"https://raw.githubusercontent.com/"
-            f"{self.github_user}/{self.github_repo}/{self.github_branch}/registry.json"
-        )
-
-    @registry_url.setter
-    def registry_url(self, value: Optional[str]) -> None:
-        """Set custom registry URL (or None to use GitHub settings)."""
-        if value:
-            self._config["registry_url"] = value
-        elif "registry_url" in self._config:
-            del self._config["registry_url"]
+    def registry_paths(self) -> list[str]:
+        """Get list of local registry paths."""
+        return self._config.get("registry_paths", [])
 
     @property
     def install_dir(self) -> Path:

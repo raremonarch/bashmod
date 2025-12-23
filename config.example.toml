@@ -1,15 +1,39 @@
 # bashmod configuration file
 # Copy this to ~/.config/bashmod/config.toml and customize
 
-# GitHub repository settings
-# The registry URL will be constructed as:
-#   https://raw.githubusercontent.com/{user}/{repo}/{branch}/registry.json
+# Registry URLs (HTTP/HTTPS)
+# You can specify multiple registries - all modules will be shown
+registry_urls = [
+    "https://raw.githubusercontent.com/user/bashrc-modules/main/registry.json",
+    # "https://example.com/team-registry.json",
+]
+
+# Local registry paths
+# Useful for development or private registries
+registry_paths = [
+    # "~/my-modules/registry.json",
+    # "/opt/company-modules/registry.json",
+]
+
+# Installation directory for modules
+# Tilde (~) will be expanded to your home directory
+install_dir = "~/.bashrc.d"
+
+# Registry structure:
+# Each registry.json should contain:
+#   - "version": "1.0"
+#   - "modules": array of module objects
 #
-# Your repo should contain:
-#   - registry.json (must be in the root)
-#   - *.sh files (can be anywhere - registry.json has the URL for each)
+# Module objects have:
+#   - id: unique identifier
+#   - description: what the module does
+#   - version: semantic version
+#   - url: download URL for the .sh file
+#   - category: grouping category
+#   - dependencies: array of module IDs (optional)
+#   - exports: aliases/functions/variables (optional)
 #
-# Example repo structure:
+# Example registry structure:
 #   my-bashrc-modules/
 #   ├── registry.json          # Defines all modules and their URLs
 #   ├── git.sh                 # Modules can be in root
@@ -17,18 +41,3 @@
 #   └── modules/               # Or organized in subdirectories
 #       ├── python.sh
 #       └── aws.sh
-#
-# The registry.json "url" field for each module specifies its exact location,
-# e.g., "url": "https://raw.githubusercontent.com/{user}/{repo}/{branch}/modules/python.sh"
-
-github_user = "your-github-username"
-github_repo = "bashrc-modules"
-github_branch = "main"
-
-# Installation directory for modules
-# Tilde (~) will be expanded to your home directory
-install_dir = "~/.bashrc.d"
-
-# Optional: Override the registry URL directly
-# If set, this takes precedence over the GitHub settings above
-# registry_url = "https://example.com/custom-registry.json"
