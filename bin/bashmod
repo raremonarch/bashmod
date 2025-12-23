@@ -4,15 +4,11 @@
 
 set -e
 
-# Try to run bashmod if it's installed
-if command -v bashmod &> /dev/null; then
-    exec bashmod "$@"
-fi
-
-# Otherwise, try to run from source (development mode)
+# Get the script's location to find the project root
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
+# If we're in a project directory with source code, always use local venv
 if [ -f "$PROJECT_ROOT/bashmod/__main__.py" ]; then
     # Create venv if it doesn't exist
     if [ ! -d "$PROJECT_ROOT/venv" ]; then
@@ -32,6 +28,11 @@ if [ -f "$PROJECT_ROOT/bashmod/__main__.py" ]; then
     fi
 
     exec python -m bashmod "$@"
+fi
+
+# Otherwise, try to run globally installed bashmod
+if command -v bashmod &> /dev/null; then
+    exec bashmod "$@"
 fi
 
 # If we get here, bashmod is not installed and not in dev mode
