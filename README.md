@@ -19,19 +19,19 @@ A TUI (Text User Interface) package manager for modular bash configurations. Eas
 ### Using pipx (Recommended)
 
 ```bash
-pipx install git+https://github.com/user/bashmod.git
+pipx install git+https://github.com/raremonarch/bashmod.git
 ```
 
 ### Using pip
 
 ```bash
-pip install git+https://github.com/user/bashmod.git
+pip install git+https://github.com/raremonarch/bashmod.git
 ```
 
 ### Development Installation
 
 ```bash
-git clone https://github.com/user/bashmod.git
+git clone https://github.com/raremonarch/bashmod.git
 cd bashmod
 python -m venv venv
 source venv/bin/activate
