@@ -1,6 +1,7 @@
 """Module installation and management."""
 
 import json
+import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -60,22 +61,43 @@ class ModuleInstaller:
 
     async def install(self, module: Module) -> None:
         """Install a module."""
-        # Download module content
         async with httpx.AsyncClient() as client:
+            # Download main module file
             response = await client.get(module.url, timeout=10.0)
             response.raise_for_status()
             content = response.text
 
-        # Determine filename
-        filename = f"{module.id}.sh"
-        install_path = self.install_dir / filename
+            # Determine filename
+            filename = f"{module.id}.sh"
+            install_path = self.install_dir / filename
 
-        # Write module file
-        with open(install_path, 'w') as f:
-            f.write(content)
+            # Write module file
+            with open(install_path, 'w') as f:
+                f.write(content)
 
-        # Make executable
-        install_path.chmod(0o644)
+            # Make readable
+            install_path.chmod(0o644)
+
+            # Install additional files if present
+            if module.files:
+                for module_file in module.files:
+                    # Download additional file
+                    file_response = await client.get(module_file.url, timeout=10.0)
+                    file_response.raise_for_status()
+                    file_content = file_response.text
+
+                    # Determine install path (relative to install_dir)
+                    file_install_path = self.install_dir / module_file.path
+
+                    # Create parent directories if needed
+                    file_install_path.parent.mkdir(parents=True, exist_ok=True)
+
+                    # Write file
+                    with open(file_install_path, 'w') as f:
+                        f.write(file_content)
+
+                    # Make readable
+                    file_install_path.chmod(0o644)
 
         # Update metadata
         metadata = self._load_metadata()
@@ -94,11 +116,16 @@ class ModuleInstaller:
         if module_id not in metadata:
             return False
 
-        # Remove file
+        # Remove main module file
         installed_module = metadata[module_id]
         install_path = Path(installed_module.installed_path)
         if install_path.exists():
             install_path.unlink()
+
+        # Remove module subdirectory if it exists
+        module_dir = self.install_dir / module_id
+        if module_dir.exists() and module_dir.is_dir():
+            shutil.rmtree(module_dir)
 
         # Update metadata
         del metadata[module_id]
