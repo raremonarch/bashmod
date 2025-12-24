@@ -250,7 +250,7 @@ class BashMod(App):
     """
 
     BINDINGS = [
-        Binding("ctrl+q", "quit", "quit", show=True, priority=True),
+        Binding("q", "quit", "quit", show=True, priority=True),
         Binding("h", "help", "help", show=True, priority=True),
         Binding("r", "refresh", "Refresh registry from GitHub", show=False),
         Binding("c", "check_conflicts", "Check Conflicts", show=False),
@@ -331,8 +331,8 @@ class BashMod(App):
             if is_installed and installed_version != module.version:
                 status = "↑"  # Update available
 
-            # Create unique key: source:id:version
-            unique_key = f"{module.source}:{module.id}:{module.version}"
+            # Create unique key: source|id|version (using | since source may contain :)
+            unique_key = f"{module.source}|{module.id}|{module.version}"
 
             # Truncate description if too long
             desc = module.description
@@ -410,9 +410,9 @@ class BashMod(App):
     @on(DataTable.RowSelected)
     def handle_row_selected(self, event: DataTable.RowSelected) -> None:
         """Handle row selection."""
-        # Parse unique key: source:id:version
+        # Parse unique key: source|id|version
         unique_key = event.row_key.value
-        parts = unique_key.split(':', 2)
+        parts = unique_key.split('|')
         if len(parts) != 3:
             return
 
@@ -538,7 +538,7 @@ Keyboard Shortcuts:
     r          Refresh registry from GitHub
     c          Show conflict details
     h          Show this help
-    Ctrl+q     Quit application
+    q          Quit application
 
   Module Details:
     i          Install module
