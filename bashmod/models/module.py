@@ -31,6 +31,7 @@ class Module:
     url: str
     category: str
     source: str = ""  # Auto-derived label for registry source
+    is_local: bool = False  # True if from local file registry
     dependencies: List[str] = field(default_factory=list)
     exports: Optional[ModuleExports] = None
     files: List[ModuleFile] = field(default_factory=list)  # Additional files for multi-file modules

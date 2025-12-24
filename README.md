@@ -11,6 +11,7 @@ A TUI (Text User Interface) package manager for modular bash configurations. Eas
 - ⚠️ **Conflict Detection** - Automatically detects duplicate aliases, functions, and variables
 - 🔄 **Version Management** - Track installed versions and available updates
 - 🎨 **Categories** - Modules organized by category (git, docker, python, etc.)
+- 📁 **Multiple Registries** - Support both remote URLs and local file paths
 - ⌨️ **Keyboard-Driven** - Fast navigation with vim-style keybindings
 
 ## Installation
@@ -102,8 +103,7 @@ The active category filter is shown in the footer (e.g., `category: development`
 
 bashmod uses a configuration file at `~/.config/bashmod/config.toml`. You can customize:
 
-- **GitHub Repository** - Where to fetch the registry from
-- **Registry URL** - Override with a custom registry URL
+- **Registries** - Multiple registry sources (URLs or local file paths)
 - **Install Directory** - Where modules are installed (default: `~/.bashrc.d`)
 
 Copy the example config:
@@ -117,23 +117,41 @@ cp config.example.toml ~/.config/bashmod/config.toml
 Example config:
 
 ```toml
-# GitHub repository settings
-github_user = "your-github-username"
-github_repo = "bashrc-modules"
-github_branch = "main"
+# Registries (URLs or local paths)
+# URLs are fetched via HTTP/HTTPS, local paths are read from filesystem
+# Local modules will be prefixed with "local:" in the TUI
+registries = [
+    "https://raw.githubusercontent.com/user/bashrc-modules/main/registry.json",
+    # Local registry for development or testing
+    "~/my-modules/registry.json",
+    # Company/team registry
+    "/opt/company-modules/registry.json",
+]
 
 # Installation directory
 install_dir = "~/.bashrc.d"
-
-# Optional: custom registry URL
-# registry_url = "https://example.com/custom-registry.json"
 ```
 
-You can also override the registry URL at runtime:
+You can also override registries at runtime:
 
 ```bash
+# Add a remote registry
 bashmod --registry-url https://example.com/my-registry.json
+
+# Add a local registry
+bashmod --registry-path ~/my-local-modules/registry.json
+
+# Multiple registries
+bashmod --registry-url https://example.com/registry1.json \
+        --registry-path ~/local-registry.json
 ```
+
+#### Local vs Remote Registries
+
+- **Remote (URL)** - Modules hosted on GitHub, GitLab, or any HTTP(S) server
+  - Displayed as `gh:user/repo` for GitHub or domain name for others
+- **Local (File Path)** - Modules on your local filesystem (great for development!)
+  - Displayed as `local:/path/to/registry` in the TUI
 
 ## How It Works
 

@@ -1,8 +1,10 @@
 """Main Textual application."""
 
-from typing import List
+from typing import Any, List
 
 from textual.app import App, ComposeResult
+from textual.events import MouseMove
+from textual.message import Message
 from textual.widgets import (
     Header, Footer, DataTable, Input, Static, Button, OptionList
 )
@@ -15,6 +17,33 @@ from textual import on
 from bashmod.core import Registry, ModuleInstaller
 from bashmod.models import Module
 from bashmod.config import get_config
+
+
+class HoverableDataTable(DataTable[Any]):
+    """DataTable with mouse hover support."""
+
+    class RowHovered(Message):
+        """Message posted when mouse hovers over a row."""
+
+        def __init__(self, row_index: int):
+            super().__init__()
+            self.row_index = row_index
+
+    def on_mouse_move(self, event: MouseMove) -> None:
+        """Handle mouse movement within the table."""
+        try:
+            # Calculate row from mouse position
+            relative_y = event.y - 1  # Subtract header row
+            if relative_y >= 0:
+                self.post_message(self.RowHovered(row_index=relative_y))
+            else:
+                self.post_message(self.RowHovered(row_index=-1))
+        except Exception:
+            self.post_message(self.RowHovered(row_index=-1))
+
+    def on_leave(self, _event: Any) -> None:
+        """Handle mouse leaving the table."""
+        self.post_message(self.RowHovered(row_index=-1))
 
 
 class CategoryFilterScreen(Screen):
@@ -116,10 +145,17 @@ class ModuleDetailScreen(Screen):
         if is_installed and installed_version != self.module.version:
             status += f" (v{installed_version}, update available: v{self.module.version})"
 
+        # Add local indicator to source
+        source_display = (
+            f"local:{self.module.source}" if self.module.is_local
+            else self.module.source
+        )
+
         yield Header()
         with Vertical():
             yield Static(f"[bold]{self.module.id}[/bold]", classes="detail-title")
             yield Static(f"Version: {self.module.version}", classes="detail-field")
+            yield Static(f"Source: {source_display}", classes="detail-field")
             yield Static(f"Category: {self.module.category}", classes="detail-field")
             yield Static(f"Status: {status}", classes="detail-field")
             yield Static(f"\n{self.module.description}", classes="detail-description")
@@ -213,6 +249,17 @@ class BashMod(App):
         margin: 0 1;
     }
 
+    #hover-info {
+        height: auto;
+        max-height: 6;
+        background: $panel;
+        border-top: solid $primary;
+        padding: 0 1;
+        margin: 0;
+        color: $text;
+        display: none;
+    }
+
     DataTable {
         height: 1fr;
     }
@@ -272,7 +319,8 @@ class BashMod(App):
         yield Input(placeholder="Search modules...", id="search-input")
         yield Static("", id="config-error-panel")
         yield Static("", id="conflicts-panel")
-        yield DataTable(id="modules-table")
+        yield HoverableDataTable(id="modules-table")
+        yield Static(id="hover-info")
         yield Footer()
 
     async def on_mount(self) -> None:
@@ -280,7 +328,7 @@ class BashMod(App):
         table = self.query_one(DataTable)
         table.cursor_type = "row"
         table.add_columns(
-            "Status", "ID", "Version", "Source", "Category", "Description"
+            "Status", "ID", "Version", "Category", "Description", "Source"
         )
 
         # Hide panels initially
@@ -334,6 +382,30 @@ class BashMod(App):
             # Create unique key: source|id|version (using | since source may contain :)
             unique_key = f"{module.source}|{module.id}|{module.version}"
 
+            # Add local indicator to source if module is from local file registry
+            source_full = f"local:{module.source}" if module.is_local else module.source
+
+            # Truncate source if too long (max 35 chars)
+            # For local sources, show "local:.../filename" format
+            if len(source_full) > 35:
+                if module.is_local:
+                    # Extract filename from path
+                    from pathlib import Path
+                    filename = Path(module.source).name
+                    # Show "local:.../filename"
+                    prefix = "local:.../"
+                    available = 35 - len(prefix)
+                    if len(filename) <= available:
+                        source_display = f"{prefix}{filename}"
+                    else:
+                        # Filename itself is too long, truncate it
+                        source_display = f"{prefix}{filename[:available-3]}..."
+                else:
+                    # For remote sources, just truncate from end
+                    source_display = source_full[:32] + "..."
+            else:
+                source_display = source_full
+
             # Truncate description if too long
             desc = module.description
             if len(desc) > 50:
@@ -343,9 +415,9 @@ class BashMod(App):
                 status,
                 module.id,
                 module.version,
-                module.source,
                 module.category,
                 desc,
+                source_display,
                 key=unique_key
             )
 
@@ -549,3 +621,42 @@ Category Filtering:
   Search works within the active category filter.
 """
         self.notify(help_text, timeout=15)
+
+    def on_hoverable_data_table_row_hovered(self, message: HoverableDataTable.RowHovered) -> None:
+        """Handle row hover events from the HoverableDataTable."""
+        hover_info = self.query_one("#hover-info", Static)
+
+        if message.row_index < 0 or message.row_index >= len(self.current_modules):
+            hover_info.styles.display = "none"
+        else:
+            self._show_hover_info_for_row(message.row_index)
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        """Handle row highlight (keyboard selection) events."""
+        table = self.query_one(DataTable)
+
+        # Get the row index from cursor position
+        if table.cursor_row < 0 or table.cursor_row >= len(self.current_modules):
+            hover_info = self.query_one("#hover-info", Static)
+            hover_info.styles.display = "none"
+        else:
+            self._show_hover_info_for_row(table.cursor_row)
+
+    def _show_hover_info_for_row(self, row_index: int) -> None:
+        """Show hover info for the given row index."""
+        hover_info = self.query_one("#hover-info", Static)
+
+        # Get the module for this row
+        sorted_modules = sorted(
+            self.current_modules,
+            key=lambda m: (m.id, m.version)
+        )
+        module = sorted_modules[row_index]
+
+        # Build full source path with local indicator
+        source_full = f"local:{module.source}" if module.is_local else module.source
+
+        # Show hover info with full source path
+        hover_text = f"Source: {source_full}"
+        hover_info.update(hover_text)
+        hover_info.styles.display = "block"

@@ -1,19 +1,19 @@
 # bashmod configuration file
 # Copy this to ~/.config/bashmod/config.toml and customize
 
-# Registry URLs (HTTP/HTTPS)
-# You can specify multiple registries - all modules will be shown
-registry_urls = [
+# Registries (URLs or local paths)
+# URLs are fetched via HTTP/HTTPS, local paths are read from filesystem
+# Local modules will be prefixed with "local:" in the TUI
+registries = [
     "https://raw.githubusercontent.com/user/bashrc-modules/main/registry.json",
     # "https://example.com/team-registry.json",
-]
-
-# Local registry paths
-# Useful for development or private registries
-registry_paths = [
     # "~/my-modules/registry.json",
     # "/opt/company-modules/registry.json",
 ]
+
+# LEGACY FORMAT (still supported for backwards compatibility):
+# registry_urls = [...]  # HTTP/HTTPS URLs only
+# registry_paths = [...]  # Local file paths only
 
 # Installation directory for modules
 # Tilde (~) will be expanded to your home directory

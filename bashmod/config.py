@@ -78,8 +78,32 @@ class Config:
         )
 
     @property
+    def registries(self) -> list[str]:
+        """Get list of registries (URLs or local paths).
+
+        Supports both:
+        - New unified format: registries = ["url1", "path1", ...]
+        - Legacy format: registry_urls and registry_paths (for backwards compatibility)
+        """
+        # Check for new unified format first
+        if "registries" in self._config:
+            return self._config.get("registries", [])
+
+        # Fall back to legacy format
+        urls = self._config.get("registry_urls", [])
+        paths = self._config.get("registry_paths", [])
+        return urls + paths
+
+    @property
     def registry_urls(self) -> list[str]:
-        """Get list of registry URLs (HTTP/HTTPS)."""
+        """Get list of registry URLs (HTTP/HTTPS).
+
+        DEPRECATED: Use registries property instead.
+        Kept for backwards compatibility.
+        """
+        # If using new unified format, filter to URLs only
+        if "registries" in self._config:
+            return [r for r in self.registries if r.startswith(("http://", "https://"))]
         return self._config.get("registry_urls", [])
 
     @registry_urls.setter
@@ -89,7 +113,14 @@ class Config:
 
     @property
     def registry_paths(self) -> list[str]:
-        """Get list of local registry paths."""
+        """Get list of local registry paths.
+
+        DEPRECATED: Use registries property instead.
+        Kept for backwards compatibility.
+        """
+        # If using new unified format, filter to non-URLs only
+        if "registries" in self._config:
+            return [r for r in self.registries if not r.startswith(("http://", "https://"))]
         return self._config.get("registry_paths", [])
 
     @property

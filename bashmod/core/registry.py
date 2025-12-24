@@ -16,8 +16,14 @@ class Registry:
 
     def __init__(self, registry_urls: Optional[List[str]] = None,
                  registry_paths: Optional[List[str]] = None):
-        """Initialize registry with optional custom URLs and paths."""
+        """Initialize registry with optional custom URLs and paths.
+
+        Args:
+            registry_urls: DEPRECATED - Use unified registries list instead
+            registry_paths: DEPRECATED - Use unified registries list instead
+        """
         if registry_urls is not None or registry_paths is not None:
+            # Legacy API: separate URLs and paths
             self.registry_urls = registry_urls or []
             self.registry_paths = registry_paths or []
         else:
@@ -28,6 +34,11 @@ class Registry:
 
         self._modules: List[Module] = []
         self._loaded = False
+
+    @staticmethod
+    def _is_url(source: str) -> bool:
+        """Check if a source string is a URL (vs a file path)."""
+        return source.startswith(('http://', 'https://'))
 
     @staticmethod
     def _derive_source_label(source: str) -> str:
@@ -79,8 +90,14 @@ class Registry:
         with open(file_path, 'r') as f:
             return json.load(f)
 
-    def _parse_registry_data(self, data: dict, source: str) -> List[Module]:
-        """Parse and validate registry data from a single source."""
+    def _parse_registry_data(self, data: dict, source: str, is_local: bool = False) -> List[Module]:
+        """Parse and validate registry data from a single source.
+
+        Args:
+            data: Registry JSON data
+            source: Human-readable source label
+            is_local: Whether this registry is from a local file (vs URL)
+        """
         # Validate registry version
         registry_version = data.get("version", "1.0")
         if registry_version != "1.0":
@@ -99,8 +116,8 @@ class Registry:
                     f"The 'name' field is not part of the registry schema. "
                     f"Remove it."
                 )
-            # Add source label to module data
-            mod_with_source = {**mod, "source": source}
+            # Add source label and is_local flag to module data
+            mod_with_source = {**mod, "source": source, "is_local": is_local}
             modules.append(Module(**mod_with_source))
 
         return modules
@@ -115,7 +132,8 @@ class Registry:
             try:
                 source_label = self._derive_source_label(url)
                 data = await self._fetch_from_url(url)
-                modules = self._parse_registry_data(data, source_label)
+                is_local = not self._is_url(url)
+                modules = self._parse_registry_data(data, source_label, is_local)
                 all_modules.extend(modules)
             except Exception as e:
                 errors.append(f"Failed to load {url}: {e}")
@@ -125,7 +143,8 @@ class Registry:
             try:
                 source_label = self._derive_source_label(path)
                 data = self._fetch_from_file(path)
-                modules = self._parse_registry_data(data, source_label)
+                is_local = True
+                modules = self._parse_registry_data(data, source_label, is_local)
                 all_modules.extend(modules)
             except Exception as e:
                 errors.append(f"Failed to load {path}: {e}")

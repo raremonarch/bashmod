@@ -59,45 +59,64 @@ class ModuleInstaller:
         with open(self.metadata_file, 'w') as f:
             json.dump(data, f, indent=2)
 
+    def _is_local_file_url(self, url: str) -> bool:
+        """Check if URL is a local file:// URL."""
+        return url.startswith('file://')
+
+    def _file_url_to_path(self, url: str) -> Path:
+        """Convert file:// URL to filesystem path."""
+        # Remove file:// prefix
+        path_str = url[7:]  # len('file://') == 7
+        return Path(path_str).expanduser()
+
+    async def _fetch_content(self, url: str) -> str:
+        """Fetch content from URL or local file."""
+        if self._is_local_file_url(url):
+            # Read from local filesystem
+            file_path = self._file_url_to_path(url)
+            with open(file_path, 'r') as f:
+                return f.read()
+        else:
+            # Download from HTTP/HTTPS
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, timeout=10.0)
+                response.raise_for_status()
+                return response.text
+
     async def install(self, module: Module) -> None:
         """Install a module."""
-        async with httpx.AsyncClient() as client:
-            # Download main module file
-            response = await client.get(module.url, timeout=10.0)
-            response.raise_for_status()
-            content = response.text
+        # Fetch main module file (local or remote)
+        content = await self._fetch_content(module.url)
 
-            # Determine filename
-            filename = f"{module.id}.sh"
-            install_path = self.install_dir / filename
+        # Determine filename
+        filename = f"{module.id}.sh"
+        install_path = self.install_dir / filename
 
-            # Write module file
-            with open(install_path, 'w') as f:
-                f.write(content)
+        # Write module file
+        with open(install_path, 'w') as f:
+            f.write(content)
 
-            # Make readable
-            install_path.chmod(0o644)
+        # Make readable
+        install_path.chmod(0o644)
 
-            # Install additional files if present
-            if module.files:
-                for module_file in module.files:
-                    # Download additional file
-                    file_response = await client.get(module_file.url, timeout=10.0)
-                    file_response.raise_for_status()
-                    file_content = file_response.text
+        # Install additional files if present
+        if module.files:
+            for module_file in module.files:
+                # Fetch additional file (local or remote)
+                file_content = await self._fetch_content(module_file.url)
 
-                    # Determine install path (relative to install_dir)
-                    file_install_path = self.install_dir / module_file.path
+                # Determine install path (relative to install_dir)
+                file_install_path = self.install_dir / module_file.path
 
-                    # Create parent directories if needed
-                    file_install_path.parent.mkdir(parents=True, exist_ok=True)
+                # Create parent directories if needed
+                file_install_path.parent.mkdir(parents=True, exist_ok=True)
 
-                    # Write file
-                    with open(file_install_path, 'w') as f:
-                        f.write(file_content)
+                # Write file
+                with open(file_install_path, 'w') as f:
+                    f.write(file_content)
 
-                    # Make readable
-                    file_install_path.chmod(0o644)
+                # Make readable
+                file_install_path.chmod(0o644)
 
         # Update metadata
         metadata = self._load_metadata()
