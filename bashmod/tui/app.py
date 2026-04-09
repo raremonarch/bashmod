@@ -3,7 +3,7 @@
 from typing import Any, List
 
 from textual.app import App, ComposeResult
-from textual.events import MouseMove
+from textual.events import Key, MouseMove
 from textual.message import Message
 from textual.widgets import (
     Header, Footer, DataTable, Input, Static, Button, OptionList
@@ -194,6 +194,19 @@ class ModuleDetailScreen(Screen):
                     yield Button("Back", id="back-btn")
 
         yield Footer()
+
+    def on_key(self, event: Key) -> None:
+        """Allow space to activate the focused button, and arrows to navigate between buttons."""
+        if isinstance(self.focused, Button):
+            if event.key == "space":
+                self.focused.press()
+                event.stop()
+            elif event.key == "right":
+                self.focus_next(Button)
+                event.stop()
+            elif event.key == "left":
+                self.focus_previous(Button)
+                event.stop()
 
     def action_dismiss(self) -> None:
         """Go back to main screen."""
