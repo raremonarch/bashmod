@@ -129,6 +129,7 @@ class ModuleDetailScreen(Screen):
     BINDINGS = [
         Binding("escape", "dismiss", "Back"),
         Binding("i", "install", "Install"),
+        Binding("u", "update", "Update"),
     ]
 
     def __init__(self, module: Module, installer: ModuleInstaller, *args, **kwargs):
@@ -140,9 +141,10 @@ class ModuleDetailScreen(Screen):
         """Compose the detail view."""
         is_installed = self.installer.is_installed(self.module.id)
         installed_version = self.installer.get_installed_version(self.module.id)
+        update_available = is_installed and installed_version != self.module.version
 
         status = "✓ Installed" if is_installed else "Not installed"
-        if is_installed and installed_version != self.module.version:
+        if update_available:
             status += f" (v{installed_version}, update available: v{self.module.version})"
 
         # Add local indicator to source
@@ -180,11 +182,16 @@ class ModuleDetailScreen(Screen):
                     yield Static(f"  • {dep}", classes="detail-list")
 
             with Horizontal(classes="button-bar"):
-                if is_installed:
+                if update_available:
+                    yield Button("Update", id="update-btn", variant="primary")
                     yield Button("Uninstall", id="uninstall-btn", variant="error")
+                    yield Button("Cancel", id="back-btn")
+                elif is_installed:
+                    yield Button("Uninstall", id="uninstall-btn", variant="error")
+                    yield Button("Back", id="back-btn")
                 else:
                     yield Button("Install", id="install-btn", variant="primary")
-                yield Button("Back", id="back-btn")
+                    yield Button("Back", id="back-btn")
 
         yield Footer()
 
@@ -198,11 +205,25 @@ class ModuleDetailScreen(Screen):
             await self.installer.install(self.module)
             self.app.pop_screen()
 
+    async def action_update(self) -> None:
+        """Update the module if an update is available."""
+        installed_version = self.installer.get_installed_version(self.module.id)
+        if self.installer.is_installed(self.module.id) and installed_version != self.module.version:
+            await self.installer.install(self.module)
+            self.app.pop_screen()
+
     @on(Button.Pressed, "#install-btn")
     async def handle_install(self) -> None:
         """Handle install button press."""
         await self.installer.install(self.module)
         self.notify(f"Installed {self.module.id}")
+        self.dismiss(True)  # Signal that refresh is needed
+
+    @on(Button.Pressed, "#update-btn")
+    async def handle_update(self) -> None:
+        """Handle update button press."""
+        await self.installer.install(self.module)
+        self.notify(f"Updated {self.module.id} to v{self.module.version}")
         self.dismiss(True)  # Signal that refresh is needed
 
     @on(Button.Pressed, "#uninstall-btn")
