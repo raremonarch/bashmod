@@ -30,3 +30,6 @@ bashmod = "bashmod.__main__:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["bashmod*"]
+
+[tool.setuptools.package-data]
+bashmod = ["config.example.toml"]

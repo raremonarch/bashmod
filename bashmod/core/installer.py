@@ -56,7 +56,7 @@ class ModuleInstaller:
             for mod_id, mod in metadata.items()
         }
 
-        with open(self.metadata_file, 'w') as f:
+        with open(self.metadata_file, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2)
 
     def _is_local_file_url(self, url: str) -> bool:
@@ -93,7 +93,7 @@ class ModuleInstaller:
         install_path = self.install_dir / filename
 
         # Write module file
-        with open(install_path, 'w') as f:
+        with open(install_path, 'w', encoding='utf-8') as f:
             f.write(content)
 
         # Make readable
@@ -112,7 +112,7 @@ class ModuleInstaller:
                 file_install_path.parent.mkdir(parents=True, exist_ok=True)
 
                 # Write file
-                with open(file_install_path, 'w') as f:
+                with open(file_install_path, 'w', encoding='utf-8') as f:
                     f.write(file_content)
 
                 # Make readable

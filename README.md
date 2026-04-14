@@ -106,26 +106,17 @@ bashmod uses a configuration file at `~/.config/bashmod/config.toml`. You can cu
 - **Registries** - Multiple registry sources (URLs or local file paths)
 - **Install Directory** - Where modules are installed (default: `~/.bashrc.d`)
 
-Copy the example config:
-
-```bash
-mkdir -p ~/.config/bashmod
-cp config.example.toml ~/.config/bashmod/config.toml
-# Edit the file to customize your settings
-```
-
-Example config:
+On first run, bashmod automatically creates `~/.config/bashmod/config.toml` with default settings. Edit it to add your registries:
 
 ```toml
 # Registries (URLs or local paths)
 # URLs are fetched via HTTP/HTTPS, local paths are read from filesystem
 # Local modules will be prefixed with "local:" in the TUI
 registries = [
-    "https://raw.githubusercontent.com/user/bashrc-modules/main/registry.json",
-    # Local registry for development or testing
-    "~/my-modules/registry.json",
-    # Company/team registry
-    "/opt/company-modules/registry.json",
+    "https://raw.githubusercontent.com/raremonarch/bashrc-modules/main/registry.json",
+    # "https://example.com/team-registry.json",
+    # "~/my-modules/registry.json",
+    # "/opt/company-modules/registry.json",
 ]
 
 # Installation directory

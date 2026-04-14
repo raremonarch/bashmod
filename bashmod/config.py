@@ -2,6 +2,7 @@
 
 import os
 import sys
+from importlib.resources import files
 from pathlib import Path
 from typing import Optional
 
@@ -27,25 +28,25 @@ class Config:
         self._config = self._load_config()
 
     def _load_config(self) -> dict:
-        """Load configuration from file."""
-        if self.config_file.exists():
+        """Load configuration from file, creating it from defaults on first run."""
+        if not self.config_file.exists():
             try:
-                if tomllib is None:
-                    # tomli not available
-                    self.config_error = (
-                        f"Config file found but tomli/tomllib not available"
-                    )
-                    return {}
-                with open(self.config_file, "rb") as f:
-                    return tomllib.load(f)
+                self.config_file.parent.mkdir(parents=True, exist_ok=True)
+                example = files("bashmod").joinpath("config.example.toml").read_text(encoding="utf-8")
+                self.config_file.write_text(example, encoding="utf-8")
             except Exception as e:
-                # Config parsing failed
-                self.config_error = f"Could not parse config file: {e}"
+                self.config_error = f"Could not create config file: {e}"
                 return {}
 
-        # No config file found
-        self.config_error = f"Config file not found."
-        return {}
+        try:
+            if tomllib is None:
+                self.config_error = "Config file found but tomli/tomllib not available"
+                return {}
+            with open(self.config_file, "rb") as f:
+                return tomllib.load(f)
+        except Exception as e:
+            self.config_error = f"Could not parse config file: {e}"
+            return {}
 
     @property
     def has_error(self) -> bool:
@@ -59,11 +60,6 @@ class Config:
 
         msg = f"⚠ Configuration Error\n\n{self.config_error}\n\n"
         msg += "To fix:\n"
-        msg += "1. Create the config directory:\n"
-        msg += f"   mkdir -p {self.config_file.parent}\n\n"
-        msg += "2. Copy the example config:\n"
-        msg += f"   cp config.example.toml {self.config_file}\n\n"
-        msg += "3. Edit with your settings:\n"
         msg += f"   vim {self.config_file}"
 
         return msg
