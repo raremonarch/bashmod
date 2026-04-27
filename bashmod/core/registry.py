@@ -90,6 +90,31 @@ class Registry:
         with open(file_path, 'r') as f:
             return json.load(f)
 
+    @staticmethod
+    def _to_local_url(url: str, registry_dir: Path) -> str:
+        """Convert a GitHub raw URL to a file:// URL if the file exists locally."""
+        parsed = urlparse(url)
+        if 'github.com' in parsed.netloc or 'githubusercontent.com' in parsed.netloc:
+            # Path structure: /owner/repo/branch/relative/path...
+            parts = [p for p in parsed.path.split('/') if p]
+            if len(parts) > 3:
+                local = registry_dir / '/'.join(parts[3:])
+                if local.exists():
+                    return local.as_uri()
+        return url
+
+    def _rewrite_local_urls(self, mod: dict, source: str) -> dict:
+        """Rewrite remote URLs to file:// URLs for a locally-loaded registry."""
+        registry_dir = Path(source)
+        mod = dict(mod)
+        mod['url'] = self._to_local_url(mod['url'], registry_dir)
+        if 'files' in mod:
+            mod['files'] = [
+                {**f, 'url': self._to_local_url(f['url'], registry_dir)}
+                for f in mod['files']
+            ]
+        return mod
+
     def _parse_registry_data(self, data: dict, source: str, is_local: bool = False) -> List[Module]:
         """Parse and validate registry data from a single source.
 
@@ -112,12 +137,13 @@ class Registry:
             if "name" in mod:
                 raise ValueError(
                     f"Module at index {idx} (id: {mod.get('id', 'unknown')}) "
-                    f"contains invalid 'name' field. "
-                    f"The 'name' field is not part of the registry schema. "
-                    f"Remove it."
+                    "contains invalid 'name' field. "
+                    "The 'name' field is not part of the registry schema. "
+                    "Remove it."
                 )
-            # Add source label and is_local flag to module data
             mod_with_source = {**mod, "source": source, "is_local": is_local}
+            if is_local:
+                mod_with_source = self._rewrite_local_urls(mod_with_source, source)
             modules.append(Module(**mod_with_source))
 
         return modules

@@ -33,9 +33,9 @@ class ConflictDetector:
 
             # Track aliases
             for alias in module.exports.aliases:
-                if alias not in aliases:
-                    aliases[alias] = set()
-                aliases[alias].add(module.id)
+                if alias.name not in aliases:
+                    aliases[alias.name] = set()
+                aliases[alias.name].add(module.id)
 
             # Track functions
             for func in module.exports.functions:

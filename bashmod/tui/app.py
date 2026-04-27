@@ -163,18 +163,33 @@ class ModuleDetailScreen(Screen):
             yield Static(f"\n{self.module.description}", classes="detail-description")
 
             if self.module.exports:
-                exports_text = []
                 if self.module.exports.aliases:
-                    exports_text.append(f"Aliases: {', '.join(self.module.exports.aliases)}")
+                    yield Static(
+                        "\n[bold]Aliases:[/bold]", classes="detail-section"
+                    )
+                    for alias in self.module.exports.aliases:
+                        if alias.body:
+                            yield Static(
+                                f"  [cyan]{alias.name}[/cyan]"
+                                f" = [dim]{alias.body}[/dim]",
+                                classes="detail-list"
+                            )
+                        else:
+                            yield Static(
+                                f"  {alias.name}", classes="detail-list"
+                            )
                 if self.module.exports.functions:
-                    exports_text.append(f"Functions: {', '.join(self.module.exports.functions)}")
+                    yield Static(
+                        "\n[bold]Functions:[/bold]", classes="detail-section"
+                    )
+                    for func in self.module.exports.functions:
+                        yield Static(f"  {func}", classes="detail-list")
                 if self.module.exports.variables:
-                    exports_text.append(f"Variables: {', '.join(self.module.exports.variables)}")
-
-                if exports_text:
-                    yield Static("\n[bold]Exports:[/bold]", classes="detail-section")
-                    for line in exports_text:
-                        yield Static(f"  • {line}", classes="detail-list")
+                    yield Static(
+                        "\n[bold]Variables:[/bold]", classes="detail-section"
+                    )
+                    for var in self.module.exports.variables:
+                        yield Static(f"  {var}", classes="detail-list")
 
             if self.module.dependencies:
                 yield Static("\n[bold]Dependencies:[/bold]", classes="detail-section")
@@ -362,7 +377,7 @@ class BashMod(App):
         table = self.query_one(DataTable)
         table.cursor_type = "row"
         table.add_columns(
-            "Status", "ID", "Version", "Category", "Description", "Source"
+            "Status", "Source", "ID", "Version", "Category", "Description"
         )
 
         # Hide panels initially
@@ -416,29 +431,17 @@ class BashMod(App):
             # Create unique key: source|id|version (using | since source may contain :)
             unique_key = f"{module.source}|{module.id}|{module.version}"
 
-            # Add local indicator to source if module is from local file registry
-            source_full = f"local:{module.source}" if module.is_local else module.source
-
-            # Truncate source if too long (max 35 chars)
-            # For local sources, show "local:.../filename" format
-            if len(source_full) > 35:
-                if module.is_local:
-                    # Extract filename from path
-                    from pathlib import Path
-                    filename = Path(module.source).name
-                    # Show "local:.../filename"
-                    prefix = "local:.../"
-                    available = 35 - len(prefix)
-                    if len(filename) <= available:
-                        source_display = f"{prefix}{filename}"
-                    else:
-                        # Filename itself is too long, truncate it
-                        source_display = f"{prefix}{filename[:available-3]}..."
-                else:
-                    # For remote sources, just truncate from end
-                    source_display = source_full[:32] + "..."
+            # Short source: owner name only
+            if module.is_local:
+                from pathlib import Path
+                short_source = Path(module.source).stem
+            elif module.source.startswith("gh:"):
+                short_source = module.source[3:].split("/")[0]
             else:
-                source_display = source_full
+                short_source = (
+                    module.source.split("/")[0]
+                    if "/" in module.source else module.source
+                )
 
             # Truncate description if too long
             desc = module.description
@@ -447,11 +450,11 @@ class BashMod(App):
 
             table.add_row(
                 status,
+                short_source,
                 module.id,
                 module.version,
                 module.category,
                 desc,
-                source_display,
                 key=unique_key
             )
 
