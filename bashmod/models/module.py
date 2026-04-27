@@ -40,6 +40,7 @@ class Module:
     category: str
     source: str = ""  # Auto-derived label for registry source
     is_local: bool = False  # True if from local file registry
+    orphaned: bool = False  # True if installed but not in any loaded registry
     dependencies: List[str] = field(default_factory=list)
     exports: Optional[ModuleExports] = None
     files: List[ModuleFile] = field(default_factory=list)  # Additional files for multi-file modules

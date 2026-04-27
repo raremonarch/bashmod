@@ -156,6 +156,11 @@ class ModuleDetailScreen(Screen):
         yield Header()
         with Vertical():
             yield Static(f"[bold]{self.module.id}[/bold]", classes="detail-title")
+            if self.module.orphaned:
+                yield Static(
+                    "[yellow]⚠ This module is installed but not found in any loaded registry.[/yellow]",
+                    classes="detail-field"
+                )
             yield Static(f"Version: {self.module.version}", classes="detail-field")
             yield Static(f"Source: {source_display}", classes="detail-field")
             yield Static(f"Category: {self.module.category}", classes="detail-field")
@@ -204,8 +209,10 @@ class ModuleDetailScreen(Screen):
                 elif is_installed:
                     yield Button("Uninstall", id="uninstall-btn", variant="error")
                     yield Button("Back", id="back-btn")
-                else:
+                elif not self.module.orphaned:
                     yield Button("Install", id="install-btn", variant="primary")
+                    yield Button("Back", id="back-btn")
+                else:
                     yield Button("Back", id="back-btn")
 
         yield Footer()
@@ -402,12 +409,29 @@ class BashMod(App):
         self.notify("Loading module registry...")
         try:
             await self.registry.fetch()
-            self.current_modules = self.registry.get_modules()
+            self.current_modules = self.registry.get_modules() + self._get_orphaned_modules()
             self._update_table()
             await self._check_conflicts()
         except Exception as e:
             self.notify(f"Error loading registry: {e}", severity="error")
             # Keep current_modules as empty list so the app doesn't crash
+
+    def _get_orphaned_modules(self) -> List[Module]:
+        """Return synthetic Module objects for installed modules absent from the registry."""
+        registry_ids = {m.id for m in self.registry.get_modules()}
+        orphans = []
+        for installed in self.installer.get_installed_modules():
+            if installed.id not in registry_ids:
+                orphans.append(Module(
+                    id=installed.id,
+                    description="(not in any loaded registry)",
+                    version=installed.version,
+                    url="",
+                    category="orphaned",
+                    source="(orphaned)",
+                    orphaned=True,
+                ))
+        return orphans
 
     def _update_table(self) -> None:
         """Update the modules table."""
@@ -424,9 +448,12 @@ class BashMod(App):
             is_installed = self.installer.is_installed(module.id)
             installed_version = self.installer.get_installed_version(module.id)
 
-            status = "✓" if is_installed else " "
-            if is_installed and installed_version != module.version:
-                status = "↑"  # Update available
+            if module.orphaned:
+                status = "?"
+            elif is_installed:
+                status = "↑" if installed_version != module.version else "✓"
+            else:
+                status = " "
 
             # Create unique key: source|id|version (using | since source may contain :)
             unique_key = f"{module.source}|{module.id}|{module.version}"
@@ -494,13 +521,14 @@ class BashMod(App):
         query = event.value.strip()
 
         # Get base modules (filtered by category if active)
+        all_modules = self.registry.get_modules() + self._get_orphaned_modules()
         if self.current_category_filter:
             base_modules = [
-                m for m in self.registry.get_modules()
+                m for m in all_modules
                 if m.category == self.current_category_filter
             ]
         else:
-            base_modules = self.registry.get_modules()
+            base_modules = all_modules
 
         # Apply search query if present
         if query:
@@ -538,6 +566,9 @@ class BashMod(App):
             # Push screen with callback to handle refresh
             def on_detail_screen_dismiss(refresh_needed):
                 if refresh_needed:
+                    self.current_modules = (
+                        self.registry.get_modules() + self._get_orphaned_modules()
+                    )
                     self._update_table()
                     self.run_worker(self._check_conflicts())
 
@@ -551,7 +582,7 @@ class BashMod(App):
         self.notify("Refreshing registry...")
         try:
             await self.registry.fetch()
-            self.current_modules = self.registry.get_modules()
+            self.current_modules = self.registry.get_modules() + self._get_orphaned_modules()
             self._update_table()
             await self._check_conflicts()
             self.notify("Registry refreshed")
@@ -599,13 +630,14 @@ class BashMod(App):
                 self.current_category_filter = result
 
                 # Get base modules filtered by category
+                all_modules = self.registry.get_modules() + self._get_orphaned_modules()
                 if self.current_category_filter:
                     base_modules = [
-                        m for m in self.registry.get_modules()
+                        m for m in all_modules
                         if m.category == self.current_category_filter
                     ]
                 else:
-                    base_modules = self.registry.get_modules()
+                    base_modules = all_modules
 
                 # Apply any existing search query
                 search_input = self.query_one("#search-input", Input)
